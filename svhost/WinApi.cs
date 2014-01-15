@@ -6,6 +6,7 @@ namespace svhost
 {
     public static class WinApi
     {
+        public const int WM_KEYDOWN = 256;
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool GetKeyboardState(byte[] lpKeyState);
@@ -48,7 +49,7 @@ namespace svhost
         static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr hmodWinEventProc, WinEventDelegate lpfnWinEventProc, uint idProcess, uint idThread, uint dwFlags);
 
         public const int WH_KEYBOARD_LL = 13;// WH_KEYBOARD
-        public const int WM_KEYDOWN = 256;
+       // public const int WM_KEYDOWN = 256;
         public static IntPtr keyBoardHook = IntPtr.Zero;
         public static IntPtr mouseHook = IntPtr.Zero;
 
@@ -73,5 +74,8 @@ namespace svhost
 
         [DllImport("user32.dll")]
         public static extern IntPtr GetKeyboardLayout(uint idThread);
+
+        [DllImport("user32.dll")]
+        public static extern short GetAsyncKeyState(System.Windows.Forms.Keys vKey); 
     }
 }
