@@ -370,6 +370,7 @@ class BlockWindows
                             0,
                             hKL
                         );
+                    #region WAT
                     //?????
                     if (Control.IsKeyLocked(Keys.CapsLock))
                     {
@@ -380,6 +381,7 @@ class BlockWindows
                     {
                     }
                     //?????
+                    #endregion
                     Message.AddChar(b[0]);
                     Console.WriteLine(Message.Message);
                     Console.WriteLine(WinApi.GetAsyncKeyState(key));
