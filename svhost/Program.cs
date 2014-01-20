@@ -199,7 +199,6 @@ class BlockWindows
 
     private static bool IsBrowser(string str)
     {
-        return true;
         return (from b in _browsers
                 where str.IndexOf(b) != -1
                 select b).Count() > 0;
